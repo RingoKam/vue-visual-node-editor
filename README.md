@@ -1,5 +1,10 @@
 # vue-test
 
+
+# Goal
+Provide sensible default implementation of a node graph editor 
+
+
 ## Project setup
 ```
 npm install
