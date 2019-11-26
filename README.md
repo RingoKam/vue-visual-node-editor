@@ -1,11 +1,20 @@
-# vue-test
+# vue-node-graph-editor 
 
+## Goal
+Provide an easy to use and customizable node graph diagram editor.
+1. HTML based node that can easily be extend and customize. 
+2. SVG based link that can be use to visualize HTML based node. 
+3. Various diagram formating abilities, ex: fit to grid, tree format, etc.
 
-# Goal
-Provide sensible default implementation of a node graph editor 
-
+## References
+This project is inspired by:
+1. React-Diagram https://github.com/projectstorm/react-diagrams
+2. Vue-Blocks https://github.com/ghostiam/vue-blocks
+3. Angular-CDK (drag and drop) https://github.com/angular/components
+4. TwineJS https://github.com/klembot/twinejs
 
 ## Project setup
+This is a project created from vue-cli 3
 ```
 npm install
 ```

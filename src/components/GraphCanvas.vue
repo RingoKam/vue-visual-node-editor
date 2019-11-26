@@ -1,10 +1,10 @@
 <template>
     <div class="graph-canvas">
-        <button @click="addNodes">Add New</button>
+        <button @click="addNodes()">Add New</button>
         <GraphNode 
             v-for="n in nodesArray"
-            :x="n.x"
-            :y="n.y" 
+            @updatePosition="updateCoordinates($event, n.id)"
+            :position="n.position"
             :key="n.id">
         </GraphNode>
     </div>
@@ -50,10 +50,10 @@ export default {
     //my output
     methods: {
         addNodes(pos) {
-            const { x, y } = pos || { x: 10, y: 100 };
+            const position = pos || { x: 10, y: 100 };
             const ids = Object.keys(this.nodesDict).sort();
             const id = ids.length > 0 ? ids.length : 0;
-            const defaultNode = { id, x, y };
+            const defaultNode = { id, position };
             this.$set(this.nodesDict, id, defaultNode);
         },
         deleteNodes() {
@@ -62,8 +62,9 @@ export default {
         updateNodes() {
 
         },
-        updateCoordinates() {
-
+        updateCoordinates(event, id) {
+            window.console.log("i am updating...", event);
+            this.nodesDict[id].position = event; 
         }
     },
     created() {
