@@ -2,7 +2,7 @@
   <div
     class="GraphNode"
     @mousedown.stop="startDrag($event)"
-    @mouseup.stop="stopDrag($event)"
+    @touchstart.stop="startDrag($event)"
     :style="GraphNodeStyle"
   >TEST</div>
 </template>
@@ -29,11 +29,11 @@ export default {
     };
   },
   mounted() {
-    document.documentElement.addEventListener(
-      "mousemove",
-      this.followDrag,
-      true
-    );
+    // document.documentElement.addEventListener(
+    //   "mousemove",
+    //   this.followDrag,
+    //   true
+    // );
     // document.documentElement.addEventListener(
     //   "mousedown",
     //   this.startDrag,
@@ -42,11 +42,11 @@ export default {
     // document.documentElement.addEventListener("mouseup", this.stopDrag, true);
   },
   destroyed() {
-    document.documentElement.removeEventListener(
-      "mousemove",
-      this.followDrag,
-      true
-    );
+    // document.documentElement.removeEventListener(
+    //   "mousemove",
+    //   this.followDrag,
+    //   true
+    // );
     // document.documentElement.removeEventListener("mousedown", this.startDrag, true);
   },
   computed: {
@@ -64,18 +64,25 @@ export default {
   },
   methods: {
     startDrag(event) {
-      // Get the exact point our DOM will get trigger
-      const { clientX, clientY } =
-        event.type === "mousedown" ? event : event.touches[0];
+      const isMouse = event.type === "mousedown";
+      const { clientX, clientY } = isMouse ? event : event.touches[0];
       this.dragStartX = clientX + window.pageXOffset;
       this.dragStartY = clientY + window.pageYOffset;
       this.isDragging = true;
-      // this.followDrag(event);
+
+      if (isMouse) {
+        this.addEventListener("mousemove", this.followDrag);
+        this.addEventListener("mouseup", this.stopDrag);
+      } else {
+        this.addEventListener("touchmove", this.followDrag);
+        this.addEventListener("touchend", this.stopDrag);
+      }
     },
     followDrag(event) {
+      const isMouse = event.type === "mousemove";
       event.preventDefault();
       if (this.isDragging) {
-        const { clientX, clientY } = event;
+        const { clientX, clientY } = isMouse ? event : event.touches[0];
         window.console.log("drag", event);
         const x = clientX + window.pageXOffset - this.dragStartX;
         const y = clientY + window.pageYOffset - this.dragStartY;
@@ -84,20 +91,34 @@ export default {
       }
     },
     stopDrag(event) {
+      const isMouse = event.type === "mouseup";
       window.console.log("stop drag", event);
       const { type, clientX, clientY } = event;
-      const { x, y } =
-        type === "mouseup"
-          ? {
-              x: clientX + window.pageXOffset - this.dragStartX,
-              y: clientY + window.pageYOffset - this.dragStartY
-            }
-          : {
-              x: this.dragOffSetX,
-              y: this.dragOffSetY
-            };
+      const { x, y } = isMouse
+        ? {
+            x: clientX + window.pageXOffset - this.dragStartX,
+            y: clientY + window.pageYOffset - this.dragStartY
+          }
+        : {
+            x: this.dragOffSetX,
+            y: this.dragOffSetY
+          };
       this.$emit("update:position", { x, y });
       this.isDragging = false;
+
+      if (isMouse) {
+        this.removeEventListener("mousemove", this.followDrag);
+        this.removeEventListener("mouseup", this.stopDrag);
+      } else {
+        this.removeEventListener("touchmove", this.followDrag);
+        this.removeEventListener("touchend", this.stopDrag);
+      }
+    },
+    addEventListener(event, callback, option = true) {
+      window.document.documentElement.addEventListener(event, callback, option);
+    },
+    removeEventListener(event, callback, option = true) {
+      window.document.documentElement.removeEventListener(event, callback, option);
     }
   }
 };
