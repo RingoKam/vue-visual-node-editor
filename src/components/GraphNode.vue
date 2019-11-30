@@ -28,27 +28,6 @@ export default {
       dragStartY: 0
     };
   },
-  mounted() {
-    // document.documentElement.addEventListener(
-    //   "mousemove",
-    //   this.followDrag,
-    //   true
-    // );
-    // document.documentElement.addEventListener(
-    //   "mousedown",
-    //   this.startDrag,
-    //   true
-    // );
-    // document.documentElement.addEventListener("mouseup", this.stopDrag, true);
-  },
-  destroyed() {
-    // document.documentElement.removeEventListener(
-    //   "mousemove",
-    //   this.followDrag,
-    //   true
-    // );
-    // document.documentElement.removeEventListener("mousedown", this.startDrag, true);
-  },
   computed: {
     GraphNodeStyle() {
       const { x, y } = this.coordinates;
