@@ -1,20 +1,22 @@
 <template>
   <div
     class="GraphNode"
+    @dblclick="$emit('select-id', id)"
     @mousedown.stop="startDrag($event)"
     @touchstart.stop="startDrag($event)"
     :style="GraphNodeStyle"
-  >TEST</div>
+  >{{id}} TEST</div>
 </template>
 
 <script>
 /**
- * The gra
+ * The graph
  */
 export default {
   props: {
     id: String,
     selected: Boolean,
+    isDragging: Boolean,
     coordinates: Object,
     dragOffSetX: Number,
     dragOffSetY: Number,
@@ -23,7 +25,6 @@ export default {
   },
   data() {
     return {
-      isDragging: false,
       dragStartX: 0,
       dragStartY: 0
     };
@@ -33,6 +34,7 @@ export default {
       const { x, y } = this.coordinates;
       console.log(this.dragOffSetY, this.dragOffSetX);
       return {
+        color: Boolean(this.selected) ? "red" : "black",
         top: `${y}px`,
         left: `${x}px`,
         transform: this.selected
@@ -41,13 +43,19 @@ export default {
       };
     }
   },
+  mounted() {
+  },
   methods: {
     startDrag(event) {
+      if (!this.selected) {
+        return;
+      }
       const isMouse = event.type === "mousedown";
       const { clientX, clientY } = isMouse ? event : event.touches[0];
       this.dragStartX = clientX + window.pageXOffset;
       this.dragStartY = clientY + window.pageYOffset;
-      this.isDragging = true;
+      
+      this.$emit("update:isDragging", true);
 
       if (isMouse) {
         this.addEventListener("mousemove", this.followDrag);
@@ -70,6 +78,10 @@ export default {
       }
     },
     stopDrag(event) {
+      //only update the node position if the node is selected and dragging around is true.
+      if(!this.selected || !this.isDragging) {
+        return;
+      }
       const isMouse = event.type === "mouseup";
       window.console.log("stop drag", event);
       const { type, clientX, clientY } = event;
@@ -83,7 +95,7 @@ export default {
             y: this.dragOffSetY
           };
       this.$emit("update:position", { x, y });
-      this.isDragging = false;
+      this.$emit("update:isDragging", false);
 
       if (isMouse) {
         this.removeEventListener("mousemove", this.followDrag);
@@ -97,7 +109,11 @@ export default {
       window.document.documentElement.addEventListener(event, callback, option);
     },
     removeEventListener(event, callback, option = true) {
-      window.document.documentElement.removeEventListener(event, callback, option);
+      window.document.documentElement.removeEventListener(
+        event,
+        callback,
+        option
+      );
     }
   }
 };

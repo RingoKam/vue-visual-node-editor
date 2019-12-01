@@ -1,5 +1,5 @@
 <template>
-  <div class="graph-canvas">
+  <div class="graph-canvas" :style="gridBackgroundStyle">
     <button @click="addNodes()">Add New</button>
     <pre>{{coordinatesDict}}</pre>
     <pre>{{nodesArray}}</pre>
@@ -7,8 +7,11 @@
       v-for="n in nodesArray"
       :dragOffSetX.sync="dragOffSetX"
       :dragOffSetY.sync="dragOffSetY"
-      :selected="true"
+      :isDragging.sync="isDragging"
+      :selected="n.selected"
       :coordinates="coordinatesDict[n.id]"
+      :id="n.id"
+      @select-id="selectId($event)"
       @update:position="updatePosition($event, n.id)"
       :key="n.id"
     ></GraphNode>
@@ -18,9 +21,7 @@
 <script>
 // import GraphLinker from "./GraphLinker";
 import GraphNode from "./GraphNode";
-//host of node and linkers
-//takes in nodes and updatenodes
-//on create
+
 export default {
   components: {
     GraphNode
@@ -46,6 +47,15 @@ export default {
           title: "New Node"
         };
       }
+    },
+    canvasConfig: {
+      type: Object,
+      default() {
+        return {
+          gridSize: [100, 25],
+          gridColor: ["rgba(0, 0, 0, 0.2)", "rgba(0, 0, 0, 0.1)"]
+        };
+      }
     }
   },
   computed: {
@@ -57,13 +67,31 @@ export default {
     },
     linksArray: function() {
       return Object.values(this.coordinatesDict);
+    },
+    /* Grid Bacground CSS */
+    gridBackgroundStyle: function() {
+      const { gridSize, gridColor } = this.canvasConfig;
+      const backgroundSize = gridSize
+        .map(size => `${size}px ${size}px, ${size}px ${size}px`)
+        .join(",");
+      const backgroundGrid = gridColor.map(
+        color => `
+      linear-gradient(to right, ${color} 1px, transparent 1px),
+      linear-gradient(to bottom, ${color} 1px, transparent 1px)
+      `
+      ).join(",");
+      return {
+        "background-image": backgroundGrid,
+        "background-size": backgroundSize
+      };
     }
   },
   data: () => ({
     nodesDict: {},
     coordinatesDict: {},
     dragOffSetX: 0,
-    dragOffSetY: 0
+    dragOffSetY: 0,
+    isDragging: false
   }),
   //my output
   methods: {
@@ -86,6 +114,9 @@ export default {
       this.coordinatesDict[id].y += y;
       this.dragOffSetX = 0;
       this.dragOffSetY = 0;
+    },
+    selectId(id) {
+      this.$set(this.nodesDict, id, { ...this.nodesDict[id], selected: !Boolean(this.nodesDict[id].selected), });
     }
   },
   created() {
