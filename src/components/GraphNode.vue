@@ -32,9 +32,9 @@ export default {
   computed: {
     GraphNodeStyle() {
       const { x, y } = this.coordinates;
-      console.log(this.dragOffSetY, this.dragOffSetX);
       return {
-        color: Boolean(this.selected) ? "red" : "black",
+        cursor: this.selected ? "move" : "pointer",
+        color: this.selected ? "red" : "black",
         top: `${y}px`,
         left: `${x}px`,
         transform: this.selected
@@ -123,6 +123,5 @@ export default {
 .GraphNode {
   position: absolute;
   box-sizing: border-box;
-  cursor: move;
 }
 </style>
