@@ -1,6 +1,12 @@
 <template>
   <div id="app">
-    <GraphCanvas :coordinates="{}" :nodes="{}"></GraphCanvas>
+    <GraphCanvas :coordinates="{}" :nodes="{}">
+      <template v-slot:body="slotProps">
+        <pre>
+          {{slotProps}}
+        </pre>
+      </template>
+    </GraphCanvas>
   </div>
 </template>
 

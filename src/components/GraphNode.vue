@@ -5,7 +5,9 @@
     @mousedown.stop="startDrag($event)"
     @touchstart.stop="startDrag($event)"
     :style="GraphNodeStyle"
-  >{{id}} TEST</div>
+  >
+    <slot></slot>
+  </div>
 </template>
 
 <script>
@@ -44,6 +46,7 @@ export default {
     }
   },
   mounted() {
+    
   },
   methods: {
     startDrag(event) {

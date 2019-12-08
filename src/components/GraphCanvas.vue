@@ -3,28 +3,45 @@
     <button @click="addNodes()">Add New</button>
     <pre>{{coordinatesDict}}</pre>
     <pre>{{nodesArray}}</pre>
+    <pre>{{linksArray}}</pre>
+    <pre>{{mousePos}}</pre>
     <GraphNode
       v-for="n in nodesArray"
       :dragOffSetX.sync="dragOffSetX"
       :dragOffSetY.sync="dragOffSetY"
       :isDragging.sync="isDragging"
       :selected="n.selected"
+      :context="n.context"
       :coordinates="coordinatesDict[n.id]"
       :id="n.id"
       @select-id="selectId($event)"
       @update:position="updatePosition($event, n.id)"
       :key="n.id"
-    ></GraphNode>
+    >
+      <!-- graph connector connect GraphNode together -->
+      <slot name="body" v-bind:body="({ ...n, coordinates:coordinatesDict[n.id]})"></slot>
+      <GraphConnector
+        @start-connection="startConnection($event)"
+        @complete-connection="completeConnection($event)"
+      />
+    </GraphNode>
+    <!-- graph edge, the line that connects node together -->
+    <GraphEdge :input="({x:0, y:100})" :output="({x: 100, y:200})" />
   </div>
 </template>
 
 <script>
 // import GraphLinker from "./GraphLinker";
 import GraphNode from "./GraphNode";
+import GraphConnector from "./GraphConnector";
+import GraphEdge from "./GraphEdge";
+import { getMousePosition } from "../helper/MouseHelper.js";
 
 export default {
   components: {
-    GraphNode
+    GraphNode,
+    GraphConnector,
+    GraphEdge
   },
   props: {
     //node context information (title, input, output)
@@ -74,12 +91,14 @@ export default {
       const backgroundSize = gridSize
         .map(size => `${size}px ${size}px, ${size}px ${size}px`)
         .join(",");
-      const backgroundGrid = gridColor.map(
-        color => `
+      const backgroundGrid = gridColor
+        .map(
+          color => `
       linear-gradient(to right, ${color} 1px, transparent 1px),
       linear-gradient(to bottom, ${color} 1px, transparent 1px)
       `
-      ).join(",");
+        )
+        .join(",");
       return {
         "background-image": backgroundGrid,
         "background-size": backgroundSize
@@ -91,7 +110,8 @@ export default {
     coordinatesDict: {},
     dragOffSetX: 0,
     dragOffSetY: 0,
-    isDragging: false
+    isDragging: false,
+    mousePos: { x: 0, y: 0 }
   }),
   //my output
   methods: {
@@ -105,6 +125,22 @@ export default {
     deleteNodes() {
       //Test
     },
+    startConnection(event) {
+      //add a new edge here...
+      document.documentElement.addEventListener(
+        "mousemove",
+        this.followMouse,
+        true
+      );
+    },
+    completeConnection() {
+      //completes an edge...
+       document.documentElement.removeEventListener(
+        "mousemove",
+        this.followMouse,
+        true
+      );
+    },
     updateNodes() {
       //Test
     },
@@ -116,7 +152,15 @@ export default {
       this.dragOffSetY = 0;
     },
     selectId(id) {
-      this.$set(this.nodesDict, id, { ...this.nodesDict[id], selected: !Boolean(this.nodesDict[id].selected), });
+      this.$set(this.nodesDict, id, {
+        ...this.nodesDict[id],
+        selected: !Boolean(this.nodesDict[id].selected)
+      });
+    },
+    followMouse(event) {
+      const { x, y } = getMousePosition(this.$el, event);
+      this.mousePos.x = x;
+      this.mousePos.y = y;
     }
   },
   created() {
