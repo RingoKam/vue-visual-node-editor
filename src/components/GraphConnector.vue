@@ -1,5 +1,9 @@
 <template>
-  <div class="circle" @mouseup="slotMouseUp($event)" @mousedown="slotMouseDown($event)"></div>
+  <div
+    class="circle"
+    @mouseup.prevent="slotMouseUp($event)"
+    @mousedown.prevent="slotMouseDown($event)"
+  ></div>
 </template>
 
 <script>
@@ -19,14 +23,15 @@ export default {
   },
   methods: {
     slotMouseUp(e) {
-        //start tracing the mouse movement...
-        this.$emit("start-connection", e);
+      //start tracing the mouse movement...
+      console.log("end tracing");
+      this.$emit("complete-connection", e);
     },
     slotMouseDown(e) {
-        //stop tracing mouse movement and see if mouse is on another Connector 
-        console.log("slot down");
-        this.$emit("complete-connection", e);
-    }, 
+      //stop tracing mouse movement and see if mouse is on another Connector
+      console.log("start tracing");
+      this.$emit("start-connection", e);
+    },
     updateConnectorPosition() {
       
     }

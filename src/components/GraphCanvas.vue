@@ -1,6 +1,5 @@
 <template>
   <div class="graph-canvas" :style="gridBackgroundStyle">
-    <button @click="addNodes()">Add New</button>
     <pre>{{coordinatesDict}}</pre>
     <pre>{{nodesArray}}</pre>
     <pre>{{linksArray}}</pre>
@@ -122,9 +121,9 @@ export default {
       this.$set(this.nodesDict, id, { ...this.defaultContext });
       this.$set(this.coordinatesDict, id, { x, y });
     },
-    deleteNodes() {
-      //Test
-    },
+    // deleteNodes() {
+    //   //Test
+    // },
     startConnection(event) {
       //add a new edge here...
       document.documentElement.addEventListener(
@@ -132,6 +131,7 @@ export default {
         this.followMouse,
         true
       );
+
     },
     completeConnection() {
       //completes an edge...

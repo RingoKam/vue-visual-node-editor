@@ -1,22 +1,16 @@
 <template>
   <div id="app">
-    <GraphCanvas :coordinates="{}" :nodes="{}">
-      <template v-slot:body="slotProps">
-        <pre>
-          {{slotProps}}
-        </pre>
-      </template>
-    </GraphCanvas>
+    <Playground />
   </div>
 </template>
 
 <script>
-import GraphCanvas from './components/GraphCanvas'
+import Playground from "./playground"
 
 export default {
   name: 'app',
   components: {
-    GraphCanvas
+    Playground
   }
 }
 </script>
