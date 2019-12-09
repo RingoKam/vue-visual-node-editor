@@ -10,7 +10,7 @@ Provide an easy to use and customizable node graph diagram editor.
 This project is inspired by:
 1. React-Diagram https://github.com/projectstorm/react-diagrams
 2. Vue-Blocks https://github.com/ghostiam/vue-blocks
-3. Angular-CDK (drag and drop) https://github.com/angular/components
+3. baklavajs https://github.com/newcat/baklavajs
 4. TwineJS https://github.com/klembot/twinejs
 
 ## Project setup
