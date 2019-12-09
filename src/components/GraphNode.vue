@@ -11,8 +11,10 @@
 </template>
 
 <script>
+import { fromEvent } from "rxjs";
+import { takeUntil, last } from "rxjs/operators";
 /**
- * The graph
+ * The graph Node
  */
 export default {
   props: {
@@ -45,9 +47,7 @@ export default {
       };
     }
   },
-  mounted() {
-    
-  },
+  mounted() {},
   methods: {
     startDrag(event) {
       if (!this.selected) {
@@ -57,23 +57,30 @@ export default {
       const { clientX, clientY } = isMouse ? event : event.touches[0];
       this.dragStartX = clientX + window.pageXOffset;
       this.dragStartY = clientY + window.pageYOffset;
-      
+      //toggle dragging status
       this.$emit("update:isDragging", true);
-
-      if (isMouse) {
-        this.addEventListener("mousemove", this.followDrag);
-        this.addEventListener("mouseup", this.stopDrag);
-      } else {
-        this.addEventListener("touchmove", this.followDrag);
-        this.addEventListener("touchend", this.stopDrag);
-      }
+      //start listening to mouse/finger movement
+      const movement$ = fromEvent(
+        document,
+        isMouse ? "mousemove" : "touchmove"
+      );
+      const endMovement$ = fromEvent(
+        document,
+        isMouse ? "mouseup" : "touchend"
+      );
+      const draggingSequence$ = movement$.pipe(takeUntil(endMovement$));
+      draggingSequence$.subscribe(e => {
+        this.followDrag(e);
+      });
+      draggingSequence$.pipe(last()).subscribe(e => {
+        this.stopDrag(e);
+      });
     },
     followDrag(event) {
       const isMouse = event.type === "mousemove";
       event.preventDefault();
       if (this.isDragging) {
         const { clientX, clientY } = isMouse ? event : event.touches[0];
-        window.console.log("drag", event);
         const x = clientX + window.pageXOffset - this.dragStartX;
         const y = clientY + window.pageYOffset - this.dragStartY;
         this.$emit("update:dragOffSetX", x);
@@ -82,7 +89,7 @@ export default {
     },
     stopDrag(event) {
       //only update the node position if the node is selected and dragging around is true.
-      if(!this.selected || !this.isDragging) {
+      if (!this.selected || !this.isDragging) {
         return;
       }
       const isMouse = event.type === "mouseup";
@@ -99,24 +106,6 @@ export default {
           };
       this.$emit("update:position", { x, y });
       this.$emit("update:isDragging", false);
-
-      if (isMouse) {
-        this.removeEventListener("mousemove", this.followDrag);
-        this.removeEventListener("mouseup", this.stopDrag);
-      } else {
-        this.removeEventListener("touchmove", this.followDrag);
-        this.removeEventListener("touchend", this.stopDrag);
-      }
-    },
-    addEventListener(event, callback, option = true) {
-      window.document.documentElement.addEventListener(event, callback, option);
-    },
-    removeEventListener(event, callback, option = true) {
-      window.document.documentElement.removeEventListener(
-        event,
-        callback,
-        option
-      );
     }
   }
 };

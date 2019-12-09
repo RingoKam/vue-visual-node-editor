@@ -1,9 +1,10 @@
 <template>
   <div class="graph-canvas" :style="gridBackgroundStyle">
     <pre>{{coordinatesDict}}</pre>
-    <pre>{{nodesArray}}</pre>
+    <pre>{{temporaryConnection}}</pre>
     <pre>{{linksArray}}</pre>
     <pre>{{mousePos}}</pre>
+    <pre>{{isConnecting}}</pre>
     <GraphNode
       v-for="n in nodesArray"
       :dragOffSetX.sync="dragOffSetX"
@@ -20,12 +21,21 @@
       <!-- graph connector connect GraphNode together -->
       <slot name="body" v-bind:body="({ ...n, coordinates:coordinatesDict[n.id]})"></slot>
       <GraphConnector
+        :isConnecting="isConnecting"
         @start-connection="startConnection($event)"
         @complete-connection="completeConnection($event)"
       />
     </GraphNode>
     <!-- graph edge, the line that connects node together -->
-    <GraphEdge :input="({x:0, y:100})" :output="({x: 100, y:200})" />
+    <div>
+      <GraphEdge
+        v-for="(con, index) in temporaryConnection"
+        :key="'e' + index"
+        :input="con.input"
+        :output="con.output"
+      />
+    </div>
+    <!-- <GraphEdge :input="({x:0, y:100})" :output="({x: 100, y:200})" /> -->
   </div>
 </template>
 
@@ -35,6 +45,8 @@ import GraphNode from "./GraphNode";
 import GraphConnector from "./GraphConnector";
 import GraphEdge from "./GraphEdge";
 import { getMousePosition } from "../helper/MouseHelper.js";
+import { fromEvent } from "rxjs";
+import { takeUntil, finalize } from "rxjs/operators";
 
 export default {
   components: {
@@ -110,7 +122,9 @@ export default {
     dragOffSetX: 0,
     dragOffSetY: 0,
     isDragging: false,
-    mousePos: { x: 0, y: 0 }
+    isConnecting: false,
+    mousePos: { x: 0, y: 0 },
+    temporaryConnection: []
   }),
   //my output
   methods: {
@@ -125,21 +139,41 @@ export default {
     //   //Test
     // },
     startConnection(event) {
-      //add a new edge here...
-      document.documentElement.addEventListener(
-        "mousemove",
-        this.followMouse,
-        true
-      );
-
+      const mouseMove$ = fromEvent(document, "mousemove");
+      const mouseUp$ = fromEvent(document, "mouseup");
+      /*
+      Turn global isConnecting flag on, so all connector,
+      all connecting will now await a potential connection. 
+      Create an connection
+      */
+      this.isConnecting = true;
+      const { x, y } = getMousePosition(this.$el, event);
+      this.temporaryConnection.push({
+        input: {
+          x,
+          y
+        },
+        output: this.mousePos
+      });
+      //take mousemove until mouse let up
+      mouseMove$
+        .pipe(
+          takeUntil(mouseUp$),
+          finalize(() => {
+            this.isConnecting = false;
+          })
+        )
+        .subscribe(
+          mouseMove => {
+            this.followMouse(mouseMove);
+          },
+          e => {
+            console.error(error);
+          }
+        );
     },
     completeConnection() {
       //completes an edge...
-       document.documentElement.removeEventListener(
-        "mousemove",
-        this.followMouse,
-        true
-      );
     },
     updateNodes() {
       //Test

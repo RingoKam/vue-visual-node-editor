@@ -1,7 +1,7 @@
 <template>
-  <svg>
+  <svg class="graph-edge">
     <g>
-      <path :d="renderPath" style="lineStyle" />
+      <path :d="renderPath" :style="lineStyle" />
     </g>
   </svg>
 </template>
@@ -25,16 +25,22 @@ export default {
       const input = this.input;
       const output = this.output;
       return Math.sqrt(
-        Math.sqrt(output.x - input.x) + Math.sqrt(output.y - input.y)
+        Math.pow(output.x - input.x, 2) + Math.pow(output.y - input.y, 2)
       );
     },
     renderPath() {
       const input = this.input;
       const output = this.output;
+      const distance = this.distance;
+    
+      if (isNaN(distance)) {
+        return;
+      }
+
       const path = `M ${input.x},${input.y} C ${input.x + this.distance}, ${
         input.y
       }, ${output.x - this.distance}, ${output.y}, ${output.x}, ${output.y}`;
-      window.console.log(path);
+      window.console.info(path);
       return path;
     },
     lineStyle() {
@@ -49,4 +55,12 @@ export default {
 </script>
 
 <style>
+.graph-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none !important;
+}
 </style>

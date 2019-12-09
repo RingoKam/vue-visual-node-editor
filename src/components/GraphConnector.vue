@@ -8,10 +8,13 @@
 
 <script>
 //possible state, connected, connecting, notConnected
-//
 export default {
   name: "Connector",
   props: {
+    isConnecting: {
+      type: Boolean,
+      default: false
+    },
     isActive: {
       type: Boolean,
       default: false
@@ -24,8 +27,10 @@ export default {
   methods: {
     slotMouseUp(e) {
       //start tracing the mouse movement...
-      console.log("end tracing");
-      this.$emit("complete-connection", e);
+      if (this.isConnecting) {
+        console.log("end tracing");
+        this.$emit("complete-connection", e);
+      }
     },
     slotMouseDown(e) {
       //stop tracing mouse movement and see if mouse is on another Connector
@@ -33,7 +38,7 @@ export default {
       this.$emit("start-connection", e);
     },
     updateConnectorPosition() {
-      
+      //
     }
   }
 };
