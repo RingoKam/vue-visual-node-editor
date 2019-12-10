@@ -2,7 +2,7 @@
   <div class="graph-canvas" :style="gridBackgroundStyle">
     <pre>{{coordinatesDict}}</pre>
     <pre>{{temporaryConnection}}</pre>
-    <pre>{{linksArray}}</pre>
+    <pre>{{nodesArray}}</pre>
     <pre>{{mousePos}}</pre>
     <pre>{{isConnecting}}</pre>
     <GraphNode
@@ -14,25 +14,43 @@
       :context="n.context"
       :coordinates="coordinatesDict[n.id]"
       :id="n.id"
+      :key="n.id"
       @select-id="selectId($event)"
       @update:position="updatePosition($event, n.id)"
-      :key="n.id"
     >
       <!-- graph connector connect GraphNode together -->
       <slot name="body" v-bind:body="({ ...n, coordinates:coordinatesDict[n.id]})"></slot>
-      <GraphConnector
-        :isConnecting="isConnecting"
-        @start-connection="startConnection($event)"
-        @complete-connection="completeConnection($event)"
-      />
+      <div class="input-output-container">
+        <div>
+          <GraphConnector
+            v-for="(i, index) in n.input"
+            :isConnecting="isConnecting"
+            :id="n.id"
+            :index="index"
+            :key="i"
+            @start-connection="startConnection($event)"
+            @complete-connection="completeConnection($event)"
+          />
+        </div>
+        <div>
+          <GraphConnector
+            v-for="(i, index) in n.output"
+            :isConnecting="isConnecting"
+            :id="n.id"
+            :index="index"
+            :key="i"
+            @start-connection="startConnection($event)"
+            @complete-connection="completeConnection($event)"
+          />
+        </div>
+      </div>
     </GraphNode>
     <!-- graph edge, the line that connects node together -->
     <div>
       <GraphEdge
-        v-for="(con, index) in temporaryConnection"
-        :key="'e' + index"
-        :input="con.input"
-        :output="con.output"
+        v-if="temporaryConnection"
+        :input="temporaryConnection.input"
+        :output="temporaryConnection.output"
       />
     </div>
     <!-- <GraphEdge :input="({x:0, y:100})" :output="({x: 100, y:200})" /> -->
@@ -124,7 +142,7 @@ export default {
     isDragging: false,
     isConnecting: false,
     mousePos: { x: 0, y: 0 },
-    temporaryConnection: []
+    temporaryConnection: null
   }),
   //my output
   methods: {
@@ -138,7 +156,7 @@ export default {
     // deleteNodes() {
     //   //Test
     // },
-    startConnection(event) {
+    startConnection({ event, id, slot }) {
       const mouseMove$ = fromEvent(document, "mousemove");
       const mouseUp$ = fromEvent(document, "mouseup");
       /*
@@ -148,19 +166,21 @@ export default {
       */
       this.isConnecting = true;
       const { x, y } = getMousePosition(this.$el, event);
-      this.temporaryConnection.push({
+      this.temporaryConnection = {
         input: {
+          id,
           x,
           y
         },
         output: this.mousePos
-      });
+      };
       //take mousemove until mouse let up
       mouseMove$
         .pipe(
           takeUntil(mouseUp$),
           finalize(() => {
             this.isConnecting = false;
+            this.temporaryConnection = null;
           })
         )
         .subscribe(
@@ -172,8 +192,10 @@ export default {
           }
         );
     },
-    completeConnection() {
-      //completes an edge...
+    completeConnection({ event, id, slot }) {
+      const inputId = this.temporaryConnection.input.id;
+      this.nodesDict.output.push()
+      //update the 
     },
     updateNodes() {
       //Test
@@ -185,10 +207,21 @@ export default {
       this.dragOffSetX = 0;
       this.dragOffSetY = 0;
     },
-    selectId(id) {
-      this.$set(this.nodesDict, id, {
-        ...this.nodesDict[id],
-        selected: !Boolean(this.nodesDict[id].selected)
+    selectId({ id, isMultiSelect }) {
+      const idsToBeFlipped = new Set(id);
+      if (!isMultiSelect) {
+        const ids = this.nodesArray
+          .filter(node => node.selected)
+          .map(node => node.id)
+          .forEach(id => {
+            idsToBeFlipped.add(id);
+          });
+      }
+      idsToBeFlipped.forEach(id => {
+        this.$set(this.nodesDict, id, {
+          ...this.nodesDict[id],
+          selected: !Boolean(this.nodesDict[id].selected)
+        });
       });
     },
     followMouse(event) {
@@ -212,5 +245,11 @@ export default {
   width: 100%;
   height: 100%;
   border: 1px solid black;
+}
+
+.input-output-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
 }
 </style>

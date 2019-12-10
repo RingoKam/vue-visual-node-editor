@@ -1,7 +1,7 @@
 <template>
   <div
     class="GraphNode"
-    @dblclick="$emit('select-id', id)"
+    @dblclick="selectId"
     @mousedown.stop="startDrag($event)"
     @touchstart.stop="startDrag($event)"
     :style="GraphNodeStyle"
@@ -47,7 +47,6 @@ export default {
       };
     }
   },
-  mounted() {},
   methods: {
     startDrag(event) {
       if (!this.selected) {
@@ -106,6 +105,9 @@ export default {
           };
       this.$emit("update:position", { x, y });
       this.$emit("update:isDragging", false);
+    },
+    selectId() {
+      this.$emit("select-id", { id: this.id, isMultiSelect: false });
     }
   }
 };

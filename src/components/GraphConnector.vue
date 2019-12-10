@@ -18,6 +18,12 @@ export default {
     isActive: {
       type: Boolean,
       default: false
+    },
+    id: {
+      type: String
+    },
+    index: {
+      type: Number
     }
   },
   mounted() {
@@ -28,17 +34,12 @@ export default {
     slotMouseUp(e) {
       //start tracing the mouse movement...
       if (this.isConnecting) {
-        console.log("end tracing");
-        this.$emit("complete-connection", e);
+        this.$emit("complete-connection", { event:e, id: this.id, slot: this.index });
       }
     },
     slotMouseDown(e) {
       //stop tracing mouse movement and see if mouse is on another Connector
-      console.log("start tracing");
-      this.$emit("start-connection", e);
-    },
-    updateConnectorPosition() {
-      //
+      this.$emit("start-connection", { event:e, id: this.id, slot: this.index });
     }
   }
 };
