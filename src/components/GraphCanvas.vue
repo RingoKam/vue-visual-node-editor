@@ -1,10 +1,11 @@
 <template>
   <div class="graph-canvas" :style="gridBackgroundStyle">
-    <pre>{{coordinatesDict}}</pre>
-    <pre>{{temporaryConnection}}</pre>
-    <pre>{{nodesArray}}</pre>
-    <pre>{{mousePos}}</pre>
-    <pre>{{isConnecting}}</pre>
+    <pre>coordinatesDict:{{coordinatesDict}}</pre>
+    <pre>temporaryConnection:{{temporaryConnection}}</pre>
+    <pre>nodesArray:{{nodesArray}}</pre>
+    <pre>mousePos:{{mousePos}}</pre>
+    <pre>isConnecting:{{isConnecting}}</pre>
+    <pre>Edges:{{edges}}</pre>
     <GraphNode
       v-for="n in nodesArray"
       :dragOffSetX.sync="dragOffSetX"
@@ -22,9 +23,11 @@
       <slot name="body" v-bind:body="({ ...n, coordinates:coordinatesDict[n.id]})"></slot>
       <div class="input-output-container">
         <div>
+          <!-- input, need to keep track and be able to query their position -->
           <GraphConnector
             v-for="(i, index) in n.input"
             :isConnecting="isConnecting"
+            :isDragging="isDragging"
             :id="n.id"
             :index="index"
             :key="i"
@@ -80,6 +83,12 @@ export default {
         return {};
       }
     },
+    edges: {
+      type: Object,
+      default() {
+        return [];
+      }
+    },
     coordinates: {
       type: Object,
       default() {
@@ -106,9 +115,9 @@ export default {
   },
   computed: {
     nodesArray: function() {
-      return Object.keys(this.nodesDict).map(key => ({
+      return Object.keys(this.localNodes).map(key => ({
         id: key,
-        ...this.nodesDict[key]
+        ...this.localNodes[key]
       }));
     },
     linksArray: function() {
@@ -135,8 +144,10 @@ export default {
     }
   },
   data: () => ({
-    nodesDict: {},
+    localNodes: {},
+    localEdges: [],
     coordinatesDict: {},
+    //
     dragOffSetX: 0,
     dragOffSetY: 0,
     isDragging: false,
@@ -148,9 +159,9 @@ export default {
   methods: {
     addNodes(pos) {
       const { x, y } = pos || { x: 10, y: 100 };
-      const ids = Object.keys(this.nodesDict).sort();
+      const ids = Object.keys(this.localNodes).sort();
       const id = ids.length > 0 ? ids.length : 0;
-      this.$set(this.nodesDict, id, { ...this.defaultContext });
+      this.$set(this.localNodes, id, { ...this.defaultContext });
       this.$set(this.coordinatesDict, id, { x, y });
     },
     // deleteNodes() {
@@ -169,6 +180,7 @@ export default {
       this.temporaryConnection = {
         input: {
           id,
+          slot,
           x,
           y
         },
@@ -192,13 +204,17 @@ export default {
           }
         );
     },
+    /*
+    Completes a connection add it to local
+    TODO: implement auto  
+    */
     completeConnection({ event, id, slot }) {
-      const inputId = this.temporaryConnection.input.id;
-      this.nodesDict.output.push()
-      //update the 
-    },
-    updateNodes() {
-      //Test
+      const outputId = this.temporaryConnection.output.id;
+      const outputSlot = this.temporaryConnection.output.slot;
+      this.localEdges.push({
+        input: { id: outputId, slot: outputSlot },
+        output: { id, slot }
+      });
     },
     updatePosition({ x, y }, id) {
       console.log("position updated", x, y, id);
@@ -218,9 +234,9 @@ export default {
           });
       }
       idsToBeFlipped.forEach(id => {
-        this.$set(this.nodesDict, id, {
-          ...this.nodesDict[id],
-          selected: !Boolean(this.nodesDict[id].selected)
+        this.$set(this.localNodes, id, {
+          ...this.localNodes[id],
+          selected: !Boolean(this.localNodes[id].selected)
         });
       });
     },
@@ -231,7 +247,8 @@ export default {
     }
   },
   created() {
-    this.nodesDict = this.nodes;
+    this.localNodes = this.nodes;
+    this.localEdges = this.edges;
     this.coordinatesDict = this.coordinates;
   }
 };
