@@ -5,6 +5,7 @@ Provide an easy to use and customizable node graph diagram editor.
 1. HTML based node that can easily be extend and customize. 
 2. SVG based link that can be use to visualize HTML based node. 
 3. Various diagram formating abilities, ex: fit to grid, tree format, etc.
+4. State should exist outside of the the graph, the library itself should hold no state besides the coordinate information....
 
 ## References
 This project is inspired by:

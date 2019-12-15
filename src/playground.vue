@@ -1,14 +1,16 @@
 <template>
-  <div class>
+  <div class="playground">
     <button @click="addNodes()">Add New</button>
-    <GraphCanvas :coordinates="coordinates" :nodes="nodes">
+    <GraphCanvas :coordinates="coordinates" :nodes="nodes" :edges="edges">
       <template v-slot:body="slotProps">
-        <h2>{{slotProps.body.title}} -- {{ slotProps.body.id }}</h2>
-        <button @click.prevent="log(slotProps)">Log</button>
-        <input />
-        <div class="input-output-section">
-          <button @click.prevent="addInput(slotProps.body.input)">Add Input</button>
-          <Button @click.prevent="addOutput(slotProps.body.output)">Add Output</Button>
+        <div class="graph-node">
+          <h2>{{slotProps.body.title}} -- {{ slotProps.body.id }}</h2>
+          <button @click.prevent="log(slotProps)">Log</button>
+          <input />
+          <div class="input-output-section">
+            <button @click.prevent="addInput(id, slotProps.body.connections)">Add Input</button>
+            <Button @click.prevent="addOutput(id, slotProps.body.connections)">Add Output</Button>
+          </div>
         </div>
       </template>
     </GraphCanvas>
@@ -24,6 +26,7 @@ export default {
   data: () => {
     return {
       nodes: {},
+      edges: [],
       coordinates: {}
     };
   },
@@ -31,14 +34,20 @@ export default {
     addNodes() {
       const ids = Object.keys(this.nodes).sort();
       const id = ids.length > 0 ? parseInt(ids[ids.length - 1]) + 1 : 0;
-      this.$set(this.nodes, id, { title: "new node", input: [], output: [] });
+      this.$set(this.nodes, id, { title: "new node", connections: [] });
       this.$set(this.coordinates, id, { x: 10, y: 100 });
     },
-    addInput(input) {
-      input.push({});
+    addInput(connections, id) {
+      const orders = connections
+        .filter(cn => cn.type[])
+        .map(cn => cn.order)
+        .sort()
+        .reverse();
+      const lastItem = orders[]
+      connections.push({ type: "input" });
     },
-    addOutput(output) {
-      output.push({});
+    addOutput(connections, id) {
+      this.connections.push({ type: "input" });
     },
     log(props) {
       console.log(props);
@@ -48,8 +57,17 @@ export default {
 </script>
 
 <style>
-  .input-output-section {
-    display: flex;
-    justify-content: space-between;
-  }
+.playground {
+  height: 100vh;
+  width: 100vh;
+}
+
+.input-output-section {
+  display: flex;
+  justify-content: space-between;
+}
+
+.graph-node {
+  background-color: #0000003b;
+}
 </style>

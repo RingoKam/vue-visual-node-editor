@@ -1,21 +1,30 @@
 <template>
-  <div class="graph-canvas" :style="gridBackgroundStyle">
-    <pre>coordinatesDict:{{coordinatesDict}}</pre>
+  <div
+    class="graph-canvas"
+    :style="{ ...gridBackgroundStyle, ...cursorStyle }"
+    @mousedown.prevent.self="mousedown"
+  >
+    <!-- <pre>coordinatesDict:{{coordinatesDict}}</pre>
+    <pre>Drag</pre>
     <pre>temporaryConnection:{{temporaryConnection}}</pre>
     <pre>nodesArray:{{nodesArray}}</pre>
     <pre>mousePos:{{mousePos}}</pre>
     <pre>isConnecting:{{isConnecting}}</pre>
     <pre>Edges:{{edges}}</pre>
+    <pre>Edge Coordinate: {{ edgesCoordinate }}</pre>-->
     <GraphNode
       v-for="n in nodesArray"
-      :dragOffSetX.sync="dragOffSetX"
-      :dragOffSetY.sync="dragOffSetY"
+      :dragOffSetX="dragOffSetX"
+      :dragOffSetY="dragOffSetY"
+      :panningX="panningX"
+      :panningY="panningY"
       :isDragging.sync="isDragging"
       :selected="n.selected"
       :context="n.context"
       :coordinates="coordinatesDict[n.id]"
       :id="n.id"
       :key="n.id"
+      @move-node="moveNodeStart"
       @select-id="selectId($event)"
       @update:position="updatePosition($event, n.id)"
     >
@@ -56,7 +65,11 @@
         :output="temporaryConnection.output"
       />
     </div>
-    <!-- <GraphEdge :input="({x:0, y:100})" :output="({x: 100, y:200})" /> -->
+    <div>
+      <GraphEdge v-for="(e, i) in edgesCoordinate" :key="i" :input="e.input" :output="e.output" />
+    </div>
+
+    <!--ContextMenu-->
   </div>
 </template>
 
@@ -67,7 +80,8 @@ import GraphConnector from "./GraphConnector";
 import GraphEdge from "./GraphEdge";
 import { getMousePosition } from "../helper/MouseHelper.js";
 import { fromEvent } from "rxjs";
-import { takeUntil, finalize } from "rxjs/operators";
+import { takeUntil, finalize, startWith } from "rxjs/operators";
+import startEngine from "../engine.js";
 
 export default {
   components: {
@@ -75,6 +89,18 @@ export default {
     GraphConnector,
     GraphEdge
   },
+  provide() {
+    const engine = startEngine();
+    return {
+      engine: engine
+    };
+  },
+  // subscriptions: function() {
+  //   const { connectorLookup$ } = this._provided.engine;
+  //   return {
+  //     connectorLookup$
+  //   };
+  // },
   props: {
     //node context information (title, input, output)
     nodes: {
@@ -84,7 +110,7 @@ export default {
       }
     },
     edges: {
-      type: Object,
+      type: Array,
       default() {
         return [];
       }
@@ -123,6 +149,22 @@ export default {
     linksArray: function() {
       return Object.values(this.coordinatesDict);
     },
+    edgesCoordinate: function() {
+      const { connectorLookup$ } = this._provided.engine;
+      if (!connectorLookup$) {
+        console.log("this is not working");
+        return [];
+      }
+      const lookupDict = connectorLookup$.getValue();
+      const edgeCoordinate = this.localEdges.map(edge => {
+        const { input, output } = edge;
+        const isSelected = this.localNodes[input.id].selected;
+        const inputPos = lookupDict[input.id].get(input.slot)();
+        const outputPos = lookupDict[output.id].get(output.slot)();
+        return { input: outputPos, output: inputPos };
+      });
+      return edgeCoordinate;
+    },
     /* Grid Bacground CSS */
     gridBackgroundStyle: function() {
       const { gridSize, gridColor } = this.canvasConfig;
@@ -141,15 +183,24 @@ export default {
         "background-image": backgroundGrid,
         "background-size": backgroundSize
       };
+    },
+    cursorStyle: function() {
+      console.log(this.cursor);
+      return {
+        cursor: this.cursor
+      };
     }
   },
   data: () => ({
     localNodes: {},
     localEdges: [],
     coordinatesDict: {},
+    cursor: "auto",
     //
     dragOffSetX: 0,
     dragOffSetY: 0,
+    panningX: 0,
+    panningY: 0,
     isDragging: false,
     isConnecting: false,
     mousePos: { x: 0, y: 0 },
@@ -178,13 +229,13 @@ export default {
       this.isConnecting = true;
       const { x, y } = getMousePosition(this.$el, event);
       this.temporaryConnection = {
-        input: {
+        input: this.mousePos,
+        output: {
           id,
           slot,
           x,
           y
-        },
-        output: this.mousePos
+        }
       };
       //take mousemove until mouse let up
       mouseMove$
@@ -204,6 +255,27 @@ export default {
           }
         );
     },
+    //handle mouse movement
+    mousedown(event) {
+      //update cursor state to grabby hand ԅ( ˘ω˘ ԅ)
+      this.cursor = "grabbing";
+      //Capture mouse movement for panning...
+      //TODO: capture touch event also?
+      const mouseMove$ = fromEvent(document, "mousemove");
+      const mouseUp$ = fromEvent(document, "mouseup");
+      mouseMove$
+        .pipe(
+          finalize(() => {
+            this.cursor = "auto";
+          }),
+          takeUntil(mouseUp$)
+        )
+        .subscribe(event => {
+          const { movementX, movementY } = event;
+          this.panningX += movementX;
+          this.panningY += movementY;
+        });
+    },
     /*
     Completes a connection add it to local
     TODO: implement auto  
@@ -217,9 +289,56 @@ export default {
       });
     },
     updatePosition({ x, y }, id) {
-      console.log("position updated", x, y, id);
       this.coordinatesDict[id].x += x;
       this.coordinatesDict[id].y += y;
+      this.dragOffSetX = 0;
+      this.dragOffSetY = 0;
+    },
+    moveNodeStart(event) {
+      const isMouse = true;
+      const { clientX, clientY } = isMouse ? event : event.touches[0];
+      const dragStartX = clientX + window.pageXOffset;
+      const dragStartY = clientY + window.pageYOffset;
+      //toggle dragging status
+      //start listening to mouse/finger movement
+      const movement$ = fromEvent(
+        document,
+        isMouse ? "mousemove" : "touchmove"
+      );
+      const endMovement$ = fromEvent(
+        document,
+        isMouse ? "mouseup" : "touchend"
+      );
+      const draggingSequence$ = movement$
+        .pipe(
+          finalize(e => {
+            this.moveNodeEnd();
+          }),
+          takeUntil(endMovement$)
+        )
+        .subscribe(e => {
+          this.movingNode(e, dragStartX, dragStartY, isMouse);
+        });
+    },
+    movingNode(event, dragStartX, dragStartY, isMouse) {
+      const { clientX, clientY } = isMouse ? event : event.touches[0];
+      const x = clientX + window.pageXOffset - dragStartX;
+      const y = clientY + window.pageYOffset - dragStartY;
+      console.log(clientX, window.pageXOffset, dragStartY);
+      this.dragOffSetX = x;
+      this.dragOffSetY = y;
+    },
+    moveNodeEnd() {
+      //find all the active node
+      const ids = Object.entries(this.localNodes)
+        .filter(([id, context]) => context.selected)
+        .map(([id]) => id)
+        .forEach(id => {
+          const x = this.coordinatesDict[id];
+          this.coordinatesDict[id].x += this.dragOffSetX;
+          this.coordinatesDict[id].y += this.dragOffSetY;
+        });
+      //reset drag
       this.dragOffSetX = 0;
       this.dragOffSetY = 0;
     },

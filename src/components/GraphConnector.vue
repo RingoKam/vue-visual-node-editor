@@ -13,6 +13,7 @@ import { filter } from "rxjs/operators";
 //possible state, connected, connecting, notConnected
 export default {
   name: "Connector",
+  inject: ["engine"],
   props: {
     isDragging: {
       type: Boolean,
@@ -30,10 +31,10 @@ export default {
       type: String,
       required: true
     },
-    "x": {
+    x: {
       type: Number
     },
-    "y": {
+    y: {
       type: Number
     },
     index: {
@@ -42,14 +43,13 @@ export default {
   },
   mounted() {
     //if the mouse is moving around and we are dragging
-    const positionUpdates$ = fromEvent(document, "mousemove").pipe(
-      filter(() => this.isDragging)
-    );
-    this.$subscribeTo(positionUpdates$, () => {
-      this.getPosition();
-    });
     const pos = this.getPosition();
     console.log(pos);
+  },
+  created() {
+    this.engine.addOrUpdateConnector(this.id, this.index, () =>
+      this.getPosition()
+    );
   },
   methods: {
     slotMouseUp(e) {
@@ -72,10 +72,11 @@ export default {
     },
     /* report the current position of the node */
     getPosition() {
-      const { x, y } = this.$el.getBoundingClientRect();
-      console.log(x, y);
-      this.$emit("update:x", x);
-      this.$emit("update:y", y);
+      const { x, y, top, left, width } = this.$el.getBoundingClientRect();
+      const center = width / 2;
+      return { x: left + center , y: top - width };
+      // this.$emit("update:x", x);
+      // this.$emit("update:y", y);
     }
   }
 };

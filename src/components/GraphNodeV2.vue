@@ -1,41 +1,45 @@
 <template>
-  <div
-    class="GraphNode"
-    @dblclick="selectId"
-    @mousedown.stop.prevent="startDrag($event)"
-    @touchstart.stop.prevent="startDrag($event)"
-    :style="GraphNodeStyle"
-  >
-    <slot></slot>
+  <div>
+    <h3>{{title}}</h3>
+    <div>{{description}}</div>
+    <div class="input-output">
+      <div>
+        <GraphConnector v-for="(input, i) in inputs" :key="'i' + i"/>
+      </div>
+      <div>
+        <GraphConnector v-for="(output, i) in outputs" :key="'e' + i"/>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { takeUntil, last, delay } from "rxjs/operators";
-/**
- * The graph Node
- */
 export default {
   props: {
     id: String,
     selected: Boolean,
     isDragging: Boolean,
-    coordinates: Object,
+    x: Number,
+    y: Number,
     dragOffSetX: Number,
     dragOffSetY: Number,
     panningX: Number,
     panningY: Number,
-    dragOffSetY: Number,
-    width: Number,
-    height: Number
-  },
-  data() {
-    return {
-      dragStartX: 0,
-      dragStartY: 0
-    };
+    dragOffSetY: Number
   },
   computed: {
+    inputs() {
+      const inputs = Object.entries(this.connections).filter(
+        (id, connection) => connection.type === "input"
+      );
+      return inputs;
+    },
+    outputs() {
+      const outputs = Object.entries(this.connections).filter(
+        (id, connection) => connection.type === "output"
+      );
+      return outputs;
+    },
     GraphNodeStyle() {
       const { x, y } = this.coordinates;
       return {
@@ -60,16 +64,16 @@ export default {
     selectId() {
       this.$emit("select-id", { id: this.id, isMultiSelect: false });
     },
-    addConnector() {
-      this.$set("", {});
+    addConnection(context) {
+      this.$emit("add-connection", { id, context });
     }
   }
 };
 </script>
 
 <style>
-.GraphNode {
-  position: absolute;
-  box-sizing: border-box;
+.input-output {
+    display: flex;
+    justify-content: space-between;
 }
 </style>

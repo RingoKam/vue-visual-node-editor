@@ -25,21 +25,19 @@ export default {
       const input = this.input;
       const output = this.output;
       return Math.sqrt(
-        Math.pow(output.x - input.x, 2) + Math.pow(output.y - input.y, 2)
+        Math.pow(input.x - output.x, 2) + Math.pow(input.y - output.y, 2)
       );
     },
     renderPath() {
       const input = this.input;
       const output = this.output;
       const distance = this.distance;
-    
       if (isNaN(distance)) {
         return;
       }
-
-      const path = `M ${input.x},${input.y} C ${input.x + this.distance}, ${
-        input.y
-      }, ${output.x - this.distance}, ${output.y}, ${output.x}, ${output.y}`;
+      const path = `M ${output.x},${output.y} C ${output.x + this.distance}, ${
+        output.y
+      }, ${input.x - this.distance}, ${input.y}, ${input.x}, ${input.y}`;
       window.console.info(path);
       return path;
     },
