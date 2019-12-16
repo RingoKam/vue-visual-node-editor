@@ -21,7 +21,6 @@ export default {
   mounted() {
     //if the mouse is moving around and we are dragging
     const pos = this.getPosition();
-        
     this.eventBus.connector.emit({
       id: this.id,
       nodeId: this.nodeId,
@@ -52,8 +51,8 @@ export default {
     /* report the current position of the node */
     getPosition() {
       const { x, y, top, left, width } = this.$el.getBoundingClientRect();
-      const center = width / 2;
-      return { x: left + center, y: top - width };
+      const center = (width / 2);
+      return { x: (x + center), y: (y - width - 12)};
       // this.$emit("update:x", x);
       // this.$emit("update:y", y);
     }

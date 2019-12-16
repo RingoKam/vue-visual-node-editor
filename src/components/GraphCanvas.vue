@@ -50,6 +50,7 @@ import GraphNode from "./GraphNode";
 import GraphConnector from "./GraphConnector";
 import GraphEdge from "./GraphEdge";
 import GraphNodeV2 from "./GraphNodeV2";
+import GraphNodeV3 from "./GraphNodeV3";
 import { getMousePosition } from "../helper/MouseHelper.js";
 import { fromEvent } from "rxjs";
 import { takeUntil, finalize, startWith, filter } from "rxjs/operators";
@@ -62,10 +63,9 @@ import {
 
 export default {
   components: {
-    GraphNode,
-    GraphConnector,
     GraphEdge,
-    GraphNodeV2
+    GraphNodeV2,
+    GraphNodeV3
   },
   provide() {
     return {

@@ -5,7 +5,7 @@
     @dblclick="selectId"
     :style="GraphNodeStyle"
   >
-    <h3>Title</h3>
+    <div>Node V2</div>
     <div>Description</div>
     <div class="input-output">
       <div>
@@ -94,6 +94,9 @@ export default {
   justify-content: space-between;
 }
 .GraphNode {
+  background: white;
+  border: 1px solid #000000;
+  border-radius: 1px;
   position: absolute;
   box-sizing: border-box;
 }
