@@ -1,52 +1,69 @@
 <template>
-  <div>
-    <h3>{{title}}</h3>
-    <div>{{description}}</div>
+  <div
+    class="GraphNode"
+    @mousedown.stop.prevent="startDrag"
+    @dblclick="selectId"
+    :style="GraphNodeStyle"
+  >
+    <h3>Title</h3>
+    <div>Description</div>
     <div class="input-output">
       <div>
-        <GraphConnector v-for="(input, i) in inputs" :key="'i' + i"/>
+        <GraphConnector v-for="input in inputs" :id="input.id" :key="id + '_' + input.id" />
       </div>
       <div>
-        <GraphConnector v-for="(output, i) in outputs" :key="'e' + i"/>
+        <GraphConnector v-for="output in outputs" :id="output.id" :key="id + '_' + output.id" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import GraphConnector from "./GraphConnector";
+
 export default {
   props: {
     id: String,
     selected: Boolean,
-    isDragging: Boolean,
+    connections: Object,
     x: Number,
     y: Number,
     dragOffSetX: Number,
     dragOffSetY: Number,
     panningX: Number,
-    panningY: Number,
-    dragOffSetY: Number
+    panningY: Number
+  },
+  provide() {
+    return { nodeId: this.id };
+  },
+  components: {
+    GraphConnector
   },
   computed: {
+    connectionsAsArray() {
+      return Object.entries(this.connections).map(([id, connection]) => ({
+        id,
+        connection
+      }));
+    },
     inputs() {
-      const inputs = Object.entries(this.connections).filter(
-        (id, connection) => connection.type === "input"
+      const inputs = this.connectionsAsArray.filter(
+        ({ id, connection }) => connection.type === "input"
       );
       return inputs;
     },
     outputs() {
-      const outputs = Object.entries(this.connections).filter(
-        (id, connection) => connection.type === "output"
+      const outputs = this.connectionsAsArray.filter(
+        ({ id, connection }) => connection.type === "output"
       );
       return outputs;
     },
     GraphNodeStyle() {
-      const { x, y } = this.coordinates;
       return {
         cursor: this.selected ? "move" : "pointer",
         color: this.selected ? "red" : "black",
-        top: `${y}px`,
-        left: `${x}px`,
+        top: `${this.y || 0}px`,
+        left: `${this.x || 0}px`,
         transform: this.selected
           ? `translate(${this.dragOffSetX + this.panningX}px, ${this
               .dragOffSetY + this.panningY}px)`
@@ -73,7 +90,11 @@ export default {
 
 <style>
 .input-output {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
+}
+.GraphNode {
+  position: absolute;
+  box-sizing: border-box;
 }
 </style>

@@ -15,6 +15,7 @@ my current state...
 nodes = {
     id: []
     connections: []
+    componentType: ''
 }
 
 edges = {
@@ -38,3 +39,5 @@ panningY //
 {
 
 }
+
+use provide and inject to pass some global flags to  

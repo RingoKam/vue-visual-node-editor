@@ -12,52 +12,24 @@
     <pre>isConnecting:{{isConnecting}}</pre>
     <pre>Edges:{{edges}}</pre>
     <pre>Edge Coordinate: {{ edgesCoordinate }}</pre>-->
-    <GraphNode
+    <component
       v-for="n in nodesArray"
+      :is="n.componentType"
       :dragOffSetX="dragOffSetX"
       :dragOffSetY="dragOffSetY"
       :panningX="panningX"
       :panningY="panningY"
-      :isDragging.sync="isDragging"
-      :selected="n.selected"
+      :isDragging.sync="canvasState.isDragging"
+      :selected="selectedIds[n.id]"
       :context="n.context"
-      :coordinates="coordinatesDict[n.id]"
+      :connections="n.connections"
+      :x="coordinatesDict[n.id].x"
+      :y="coordinatesDict[n.id].y"
       :id="n.id"
       :key="n.id"
       @move-node="moveNodeStart"
       @select-id="selectId($event)"
-      @update:position="updatePosition($event, n.id)"
-    >
-      <!-- graph connector connect GraphNode together -->
-      <slot name="body" v-bind:body="({ ...n, coordinates:coordinatesDict[n.id]})"></slot>
-      <div class="input-output-container">
-        <div>
-          <!-- input, need to keep track and be able to query their position -->
-          <GraphConnector
-            v-for="(i, index) in n.input"
-            :isConnecting="isConnecting"
-            :isDragging="isDragging"
-            :id="n.id"
-            :index="index"
-            :key="i"
-            @start-connection="startConnection($event)"
-            @complete-connection="completeConnection($event)"
-          />
-        </div>
-        <div>
-          <GraphConnector
-            v-for="(i, index) in n.output"
-            :isConnecting="isConnecting"
-            :id="n.id"
-            :index="index"
-            :key="i"
-            @start-connection="startConnection($event)"
-            @complete-connection="completeConnection($event)"
-          />
-        </div>
-      </div>
-    </GraphNode>
-    <!-- graph edge, the line that connects node together -->
+    ></component>
     <div>
       <GraphEdge
         v-if="temporaryConnection"
@@ -66,9 +38,8 @@
       />
     </div>
     <div>
-      <GraphEdge v-for="(e, i) in edgesCoordinate" :key="i" :input="e.input" :output="e.output" />
+      <GraphEdge v-for="(e, i) in edgeCoordinateArray" :key="i" :input="e.to" :output="e.from" />
     </div>
-
     <!--ContextMenu-->
   </div>
 </template>
@@ -78,29 +49,51 @@
 import GraphNode from "./GraphNode";
 import GraphConnector from "./GraphConnector";
 import GraphEdge from "./GraphEdge";
+import GraphNodeV2 from "./GraphNodeV2";
 import { getMousePosition } from "../helper/MouseHelper.js";
 import { fromEvent } from "rxjs";
-import { takeUntil, finalize, startWith } from "rxjs/operators";
+import { takeUntil, finalize, startWith, filter } from "rxjs/operators";
 import startEngine from "../engine.js";
+import {
+  createEventBus,
+  nodeEventName,
+  connectorEventName
+} from "../eventbus.js";
 
 export default {
   components: {
     GraphNode,
     GraphConnector,
-    GraphEdge
+    GraphEdge,
+    GraphNodeV2
   },
   provide() {
-    const engine = startEngine();
     return {
-      engine: engine
+      eventBus: this.eventBus,
+      canvasState: this.canvasState
     };
   },
-  // subscriptions: function() {
-  //   const { connectorLookup$ } = this._provided.engine;
-  //   return {
-  //     connectorLookup$
-  //   };
-  // },
+  mounted() {
+    const { node, connector } = this.eventBus;
+    const updateConnectionPosition$ = connector.events$.pipe(
+      filter(({ event }) => event === connectorEventName.UPDATE_POSITION)
+    );
+    const startConnection$ = connector.events$.pipe(
+      filter(({ event }) => event === connectorEventName.START_CONNECTION)
+    );
+    const completeConnection$ = connector.events$.pipe(
+      filter(({ event }) => event === connectorEventName.COMPLETE_CONNECTION)
+    );
+    this.$subscribeTo(updateConnectionPosition$, p => {
+      this.updateConnectorPosition(p);
+    });
+    this.$subscribeTo(startConnection$, p => {
+      this.startConnection(p);
+    });
+    this.$subscribeTo(completeConnection$, p => {
+      this.completeConnection(p);
+    });
+  },
   props: {
     //node context information (title, input, output)
     nodes: {
@@ -108,6 +101,9 @@ export default {
       default() {
         return {};
       }
+    },
+    eventBus: {
+      type: Object
     },
     edges: {
       type: Array,
@@ -139,6 +135,12 @@ export default {
       }
     }
   },
+  watch: {
+    edges: function() {
+      //everytime edge change compute the array again...
+      this.computeEdgeCoordinateArray();
+    }
+  },
   computed: {
     nodesArray: function() {
       return Object.keys(this.localNodes).map(key => ({
@@ -149,22 +151,36 @@ export default {
     linksArray: function() {
       return Object.values(this.coordinatesDict);
     },
-    edgesCoordinate: function() {
-      const { connectorLookup$ } = this._provided.engine;
-      if (!connectorLookup$) {
-        console.log("this is not working");
-        return [];
-      }
-      const lookupDict = connectorLookup$.getValue();
-      const edgeCoordinate = this.localEdges.map(edge => {
-        const { input, output } = edge;
-        const isSelected = this.localNodes[input.id].selected;
-        const inputPos = lookupDict[input.id].get(input.slot)();
-        const outputPos = lookupDict[output.id].get(output.slot)();
-        return { input: outputPos, output: inputPos };
-      });
-      return edgeCoordinate;
-    },
+    // edgeCoordinates: function() {
+    //   const obj = {};
+    //   Object.entries(this.edgeCoordinateDict).forEach(([nodeId, ids]) => {
+    //     obj[nodeId] = {};
+    //     const parent = this.coordinatesDict[nodeId];
+    //     Object.entries(ids).forEach(([id, posOffSet]) => {
+    //       const x = parent.x - posOffSet.x;
+    //       const y = parent.y - posOffSet.y;
+    //       obj[nodeId][id] = { x, y };
+    //     });
+    //   });
+    //   return obj;
+    // },
+
+    // edgesCoordinate: function() {
+    //   const { connectorLookup$ } = this._provided.engine;
+    //   if (!connectorLookup$) {
+    //     console.log("this is not working");
+    //     return [];
+    //   }
+    //   const lookupDict = connectorLookup$.getValue();
+    //   const edgeCoordinate = this.localEdges.map(edge => {
+    //     const { input, output } = edge;
+    //     const isSelected = this.localNodes[input.id].selected;
+    //     const inputPos = lookupDict[input.id].get(input.slot)();
+    //     const outputPos = lookupDict[output.id].get(output.slot)();
+    //     return { input: outputPos, output: inputPos };
+    //   });
+    //   return edgeCoordinate;
+    // },
     /* Grid Bacground CSS */
     gridBackgroundStyle: function() {
       const { gridSize, gridColor } = this.canvasConfig;
@@ -191,21 +207,27 @@ export default {
       };
     }
   },
-  data: () => ({
-    localNodes: {},
-    localEdges: [],
-    coordinatesDict: {},
-    cursor: "auto",
-    //
-    dragOffSetX: 0,
-    dragOffSetY: 0,
-    panningX: 0,
-    panningY: 0,
-    isDragging: false,
-    isConnecting: false,
-    mousePos: { x: 0, y: 0 },
-    temporaryConnection: null
-  }),
+  data() {
+    return {
+      localNodes: {},
+      localEdges: [],
+      edgeCoordinateArray: [],
+      coordinatesDict: {},
+      edgeCoordinateDict: {},
+      cursor: "auto",
+      selectedIds: {},
+      dragOffSetX: 0,
+      dragOffSetY: 0,
+      panningX: 0,
+      panningY: 0,
+      mousePos: { x: 0, y: 0 },
+      temporaryConnection: null,
+      canvasState: {
+        isDragging: false,
+        isConnecting: false
+      }
+    };
+  },
   //my output
   methods: {
     addNodes(pos) {
@@ -218,49 +240,12 @@ export default {
     // deleteNodes() {
     //   //Test
     // },
-    startConnection({ event, id, slot }) {
-      const mouseMove$ = fromEvent(document, "mousemove");
-      const mouseUp$ = fromEvent(document, "mouseup");
-      /*
-      Turn global isConnecting flag on, so all connector,
-      all connecting will now await a potential connection. 
-      Create an connection
-      */
-      this.isConnecting = true;
-      const { x, y } = getMousePosition(this.$el, event);
-      this.temporaryConnection = {
-        input: this.mousePos,
-        output: {
-          id,
-          slot,
-          x,
-          y
-        }
-      };
-      //take mousemove until mouse let up
-      mouseMove$
-        .pipe(
-          takeUntil(mouseUp$),
-          finalize(() => {
-            this.isConnecting = false;
-            this.temporaryConnection = null;
-          })
-        )
-        .subscribe(
-          mouseMove => {
-            this.followMouse(mouseMove);
-          },
-          e => {
-            console.error(error);
-          }
-        );
-    },
     //handle mouse movement
+    //Capture mouse movement for panning...
+    //TODO: capture touch event also?
     mousedown(event) {
       //update cursor state to grabby hand ԅ( ˘ω˘ ԅ)
       this.cursor = "grabbing";
-      //Capture mouse movement for panning...
-      //TODO: capture touch event also?
       const mouseMove$ = fromEvent(document, "mousemove");
       const mouseUp$ = fromEvent(document, "mouseup");
       mouseMove$
@@ -274,25 +259,74 @@ export default {
           const { movementX, movementY } = event;
           this.panningX += movementX;
           this.panningY += movementY;
+          this.computeEdgeCoordinateArray();
         });
+    },
+    updateConnectorPosition({ payload }) {
+      const { id, nodeId, position, positionQuery } = payload;
+      if (!this.edgeCoordinateDict[nodeId]) {
+        this.$set(this.edgeCoordinateDict, nodeId, {});
+      }
+      const parent = this.coordinatesDict[nodeId];
+      const { x, y } = position;
+      this.$set(this.edgeCoordinateDict[nodeId], id, {
+        x: parent.x - (x - this.panningX),
+        y: parent.y - (y - this.panningY),
+        query: positionQuery
+      });
+    },
+    startConnection({ payload }) {
+      console.log(payload);
+      const { id, nodeId } = payload;
+      const mouseMove$ = fromEvent(document, "mousemove");
+      const mouseUp$ = fromEvent(document, "mouseup");
+      /*
+      Turn global isConnecting flag on, so all connector,
+      all connecting will now await a potential connection. 
+      Create an connection
+      */
+      this.canvasState.isConnecting = true;
+      const { x, y } = this.edgeCoordinateDict[nodeId][id].query();
+      // const { x, y } = getMousePosition(this.$el, event);
+      this.temporaryConnection = {
+        input: this.mousePos,
+        output: {
+          id,
+          nodeId,
+          x: x,
+          y: y
+        }
+      };
+      //take mousemove until mouse let up
+      mouseMove$
+        .pipe(
+          takeUntil(mouseUp$),
+          finalize(() => {
+            this.canvasState.isConnecting = false;
+            this.temporaryConnection = null;
+          })
+        )
+        .subscribe(
+          mouseMove => {
+            this.followMouse(mouseMove);
+          },
+          e => {
+            console.error(error);
+          }
+        );
     },
     /*
     Completes a connection add it to local
     TODO: implement auto  
     */
-    completeConnection({ event, id, slot }) {
-      const outputId = this.temporaryConnection.output.id;
-      const outputSlot = this.temporaryConnection.output.slot;
-      this.localEdges.push({
-        input: { id: outputId, slot: outputSlot },
-        output: { id, slot }
-      });
-    },
-    updatePosition({ x, y }, id) {
-      this.coordinatesDict[id].x += x;
-      this.coordinatesDict[id].y += y;
-      this.dragOffSetX = 0;
-      this.dragOffSetY = 0;
+    completeConnection({ event, payload }) {
+      const { nodeId, id } = payload;
+      const output = this.temporaryConnection.output;
+      const newEdge = {
+        from: { nodeId: output.nodeId, id: output.id },
+        to: { nodeId, id }
+      };
+      this.$emit("add-new-edge", newEdge);
     },
     moveNodeStart(event) {
       const isMouse = true;
@@ -311,7 +345,7 @@ export default {
       );
       const draggingSequence$ = movement$
         .pipe(
-          finalize(e => {
+          finalize(() => {
             this.moveNodeEnd();
           }),
           takeUntil(endMovement$)
@@ -321,20 +355,33 @@ export default {
         });
     },
     movingNode(event, dragStartX, dragStartY, isMouse) {
-      const { clientX, clientY } = isMouse ? event : event.touches[0];
+      const { clientX, clientY, movementX, movementY } = isMouse
+        ? event
+        : event.touches[0];
       const x = clientX + window.pageXOffset - dragStartX;
       const y = clientY + window.pageYOffset - dragStartY;
       console.log(clientX, window.pageXOffset, dragStartY);
       this.dragOffSetX = x;
       this.dragOffSetY = y;
+      this.computeEdgeCoordinateArray();
+      //TODO: move all the selected node as well
+      // Object.entries(this.selectedIds)
+      //   .filter(([nodeId, isSelected]) => isSelected)
+      //   .map(([nodeId]) => nodeId)
+      //   .forEach(nodeId => {
+      //     //update all the child position with offsetx and offsety
+      //     Object.keys(this.edgeCoordinateDict[nodeId]).forEach(id => {
+      //       this.edgeCoordinateDict[nodeId][id].x += movementX;
+      //       this.edgeCoordinateDict[nodeId][id].y += movementY;
+      //     });
+      //   });
     },
-    moveNodeEnd() {
+    moveNodeEnd(e) {
       //find all the active node
       const ids = Object.entries(this.localNodes)
-        .filter(([id, context]) => context.selected)
+        .filter(([id, context]) => Boolean(this.selectedIds[id]))
         .map(([id]) => id)
         .forEach(id => {
-          const x = this.coordinatesDict[id];
           this.coordinatesDict[id].x += this.dragOffSetX;
           this.coordinatesDict[id].y += this.dragOffSetY;
         });
@@ -343,26 +390,32 @@ export default {
       this.dragOffSetY = 0;
     },
     selectId({ id, isMultiSelect }) {
-      const idsToBeFlipped = new Set(id);
-      if (!isMultiSelect) {
-        const ids = this.nodesArray
-          .filter(node => node.selected)
-          .map(node => node.id)
-          .forEach(id => {
-            idsToBeFlipped.add(id);
+      if (!this.selectedIds[id]) {
+        this.$set(this.selectedIds, id, true);
+      } else {
+        Object.keys(this.selectedIds)
+          .filter(k => k !== id)
+          .forEach(k => {
+            this.selectedIds[k] = false;
           });
+        this.selectedIds[id] = !this.selectedIds[id];
       }
-      idsToBeFlipped.forEach(id => {
-        this.$set(this.localNodes, id, {
-          ...this.localNodes[id],
-          selected: !Boolean(this.localNodes[id].selected)
-        });
-      });
     },
     followMouse(event) {
       const { x, y } = getMousePosition(this.$el, event);
       this.mousePos.x = x;
       this.mousePos.y = y;
+    },
+    computeEdgeCoordinateArray: function() {
+      this.edgeCoordinateArray = this.edges.map(edge => {
+        const { from, to } = edge;
+        const fromPos = this.edgeCoordinateDict[from.nodeId][from.id].query();
+        const toPos = this.edgeCoordinateDict[to.nodeId][to.id].query();
+        return {
+          from: { x: fromPos.x, y: fromPos.y },
+          to: { x: toPos.x, y: toPos.y }
+        };
+      });
     }
   },
   created() {
@@ -372,7 +425,6 @@ export default {
   }
 };
 </script>
-
 <style>
 .graph-canvas {
   position: relative;

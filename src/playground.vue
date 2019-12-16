@@ -1,53 +1,71 @@
 <template>
   <div class="playground">
     <button @click="addNodes()">Add New</button>
-    <GraphCanvas :coordinates="coordinates" :nodes="nodes" :edges="edges">
-      <template v-slot:body="slotProps">
-        <div class="graph-node">
-          <h2>{{slotProps.body.title}} -- {{ slotProps.body.id }}</h2>
-          <button @click.prevent="log(slotProps)">Log</button>
-          <input />
-          <div class="input-output-section">
-            <button @click.prevent="addInput(id, slotProps.body.connections)">Add Input</button>
-            <Button @click.prevent="addOutput(id, slotProps.body.connections)">Add Output</Button>
-          </div>
-        </div>
-      </template>
-    </GraphCanvas>
+    <GraphCanvas
+      :eventBus="eventBus"
+      :coordinates="coordinates"
+      :nodes="nodes"
+      :edges="edges"
+      @add-new-edge="addNew"
+    ></GraphCanvas>
   </div>
 </template>
+
 <script>
 import GraphCanvas from "./components/GraphCanvas";
+import GraphNodeV2 from "./components/GraphNodeV2";
+import GraphConnector from "./components/GraphConnector";
+import { createEventBus } from "./eventbus.js";
 
 export default {
   components: {
-    GraphCanvas
+    GraphCanvas,
+    GraphConnector
   },
   data: () => {
     return {
+      eventBus: null,
       nodes: {},
       edges: [],
       coordinates: {}
     };
   },
+  created() {
+    this.eventBus = createEventBus();
+  },
   methods: {
     addNodes() {
       const ids = Object.keys(this.nodes).sort();
       const id = ids.length > 0 ? parseInt(ids[ids.length - 1]) + 1 : 0;
-      this.$set(this.nodes, id, { title: "new node", connections: [] });
+      this.$set(this.nodes, id, {
+        title: "new node",
+        componentType: "GraphNodeV2",
+        connections: {
+          input: { type: "input", order: 1 },
+          output: { type: "output", order: 1 }
+        }
+      });
       this.$set(this.coordinates, id, { x: 10, y: 100 });
+    },
+    addNew(newEdge) {
+      this.edges.push(newEdge);
     },
     addInput(connections, id) {
       const orders = connections
-        .filter(cn => cn.type[])
+        .filter(cn => cn.type === "input")
         .map(cn => cn.order)
         .sort()
         .reverse();
-      const lastItem = orders[]
-      connections.push({ type: "input" });
+      const lastItem = orders[0];
     },
     addOutput(connections, id) {
-      this.connections.push({ type: "input" });
+      const orders = connections
+        .filter(cn => cn.type === "output")
+        .map(cn => cn.order)
+        .sort()
+        .reverse();
+      const lastItem = orders[0];
+      this.connections.push({ type: "output", order: lastItem });
     },
     log(props) {
       console.log(props);
@@ -59,7 +77,7 @@ export default {
 <style>
 .playground {
   height: 100vh;
-  width: 100vh;
+  width: 100vw;
 }
 
 .input-output-section {

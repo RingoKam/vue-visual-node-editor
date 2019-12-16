@@ -9,72 +9,51 @@
 <script>
 import { fromEvent } from "rxjs";
 import { filter } from "rxjs/operators";
+import { connectorEventName } from "../eventbus";
 
 //possible state, connected, connecting, notConnected
 export default {
   name: "Connector",
-  inject: ["engine"],
+  inject: ["eventBus", "nodeId", "canvasState"],
   props: {
-    isDragging: {
-      type: Boolean,
-      default: false
-    },
-    isConnecting: {
-      type: Boolean,
-      default: false
-    },
-    isActive: {
-      type: Boolean,
-      default: false
-    },
-    id: {
-      type: String,
-      required: true
-    },
-    x: {
-      type: Number
-    },
-    y: {
-      type: Number
-    },
-    index: {
-      type: Number
-    }
+    id: [Number, String]
   },
   mounted() {
     //if the mouse is moving around and we are dragging
     const pos = this.getPosition();
-    console.log(pos);
-  },
-  created() {
-    this.engine.addOrUpdateConnector(this.id, this.index, () =>
-      this.getPosition()
-    );
+        
+    this.eventBus.connector.emit({
+      id: this.id,
+      nodeId: this.nodeId,
+      event: connectorEventName.UPDATE_POSITION,
+      position: pos,
+      positionQuery: () => this.getPosition()
+    });
   },
   methods: {
     slotMouseUp(e) {
       //start tracing the mouse movement...
-      if (this.isConnecting) {
-        this.$emit("complete-connection", {
-          event: e,
-          id: this.id,
-          slot: this.index
+      if (this.canvasState.isConnecting) {
+        this.eventBus.connector.emit({
+          nodeId: this.nodeId,
+          event: connectorEventName.COMPLETE_CONNECTION,
+          id: this.id
         });
       }
     },
     slotMouseDown(e) {
       //stop tracing mouse movement and see if mouse is on another Connector
-      this.$emit("start-connection", {
-        event: e,
-        id: this.id,
-        slot: this.index
+      this.eventBus.connector.emit({
+        nodeId: this.nodeId,
+        event: connectorEventName.START_CONNECTION,
+        id: this.id
       });
     },
     /* report the current position of the node */
     getPosition() {
       const { x, y, top, left, width } = this.$el.getBoundingClientRect();
       const center = width / 2;
-      return { x: left + center , y: top - width };
+      return { x: left + center, y: top - width };
       // this.$emit("update:x", x);
       // this.$emit("update:y", y);
     }
