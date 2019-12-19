@@ -1,9 +1,7 @@
 <template>
-  <svg class="graph-edge">
-    <g>
-      <path :d="renderPath" :style="lineStyle" />
-    </g>
-  </svg>
+  <g>
+    <path :d="renderPath" :style="lineStyle" />
+  </g>
 </template>
 
 <script>
@@ -33,6 +31,9 @@ export default {
       const output = this.output;
       const distance = this.distance;
       if (isNaN(distance)) {
+        console.error(
+          `unable to compute distance between ${this.input} and ${this.output}`
+        );
         return;
       }
       const path = `M ${output.x},${output.y} C ${output.x + this.distance}, ${
@@ -53,13 +54,5 @@ export default {
 </script>
 
 <style>
-.graph-edge {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none !important;
-}
+
 </style>

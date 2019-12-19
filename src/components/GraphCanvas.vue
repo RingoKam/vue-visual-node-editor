@@ -2,6 +2,7 @@
   <div
     class="graph-canvas"
     :style="{ ...gridBackgroundStyle, ...cursorStyle }"
+    @contextmenu.prevent.self=""
     @mousedown.prevent.self="mousedown"
   >
     <!-- <pre>coordinatesDict:{{coordinatesDict}}</pre>
@@ -30,16 +31,14 @@
       @move-node="moveNodeStart"
       @select-id="selectId($event)"
     ></component>
-    <div>
+    <svg class="graph-edges">
       <GraphEdge
         v-if="temporaryConnection"
         :input="temporaryConnection.input"
         :output="temporaryConnection.output"
       />
-    </div>
-    <div>
       <GraphEdge v-for="(e, i) in edgeCoordinateArray" :key="i" :input="e.to" :output="e.from" />
-    </div>
+    </svg>
     <!--ContextMenu-->
   </div>
 </template>
@@ -230,19 +229,9 @@ export default {
   },
   //my output
   methods: {
-    addNodes(pos) {
-      const { x, y } = pos || { x: 10, y: 100 };
-      const ids = Object.keys(this.localNodes).sort();
-      const id = ids.length > 0 ? ids.length : 0;
-      this.$set(this.localNodes, id, { ...this.defaultContext });
-      this.$set(this.coordinatesDict, id, { x, y });
+    openContextMenu() {
+      
     },
-    // deleteNodes() {
-    //   //Test
-    // },
-    //handle mouse movement
-    //Capture mouse movement for panning...
-    //TODO: capture touch event also?
     mousedown(event) {
       //update cursor state to grabby hand ԅ( ˘ω˘ ԅ)
       this.cursor = "grabbing";
@@ -286,6 +275,9 @@ export default {
       Create an connection
       */
       this.canvasState.isConnecting = true;
+      const el = this.$el.getBoundingClientRect();
+      const offsetX = el.x;
+      const offsetY = el.y;
       const { x, y } = this.edgeCoordinateDict[nodeId][id].query();
       // const { x, y } = getMousePosition(this.$el, event);
       this.temporaryConnection = {
@@ -293,8 +285,8 @@ export default {
         output: {
           id,
           nodeId,
-          x: x,
-          y: y
+          x: x - offsetX,
+          y: y - offsetY
         }
       };
       //take mousemove until mouse let up
@@ -407,13 +399,17 @@ export default {
       this.mousePos.y = y;
     },
     computeEdgeCoordinateArray: function() {
+      const el = this.$el.getBoundingClientRect();
+      const offsetX = el.x;
+      const offsetY = el.y;
+      console.log(offsetX, offsetY);
       this.edgeCoordinateArray = this.edges.map(edge => {
         const { from, to } = edge;
         const fromPos = this.edgeCoordinateDict[from.nodeId][from.id].query();
         const toPos = this.edgeCoordinateDict[to.nodeId][to.id].query();
         return {
-          from: { x: fromPos.x, y: fromPos.y },
-          to: { x: toPos.x, y: toPos.y }
+          from: { x: fromPos.x - offsetX, y: fromPos.y - offsetY },
+          to: { x: toPos.x - offsetX, y: toPos.y - offsetY }
         };
       });
     }
@@ -435,9 +431,13 @@ export default {
   border: 1px solid black;
 }
 
-.input-output-container {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px;
+.graph-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none !important;
 }
 </style>

@@ -51,10 +51,8 @@ export default {
     /* report the current position of the node */
     getPosition() {
       const { x, y, top, left, width } = this.$el.getBoundingClientRect();
-      const center = (width / 2);
-      return { x: (x + center), y: (y - width - 12)};
-      // this.$emit("update:x", x);
-      // this.$emit("update:y", y);
+      const center = width / 2;
+      return { x: (x + center), y: (y + center)};
     }
   }
 };

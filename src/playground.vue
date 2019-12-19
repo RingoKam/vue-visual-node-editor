@@ -18,6 +18,7 @@
 <script>
 import GraphCanvas from "./components/GraphCanvas";
 import { createEventBus } from "./eventbus.js";
+import { fromEvent } from "rxjs";
 
 export default {
   components: {
