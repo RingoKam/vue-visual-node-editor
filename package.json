@@ -9,7 +9,7 @@
     "lib": "vue-cli-service build --target lib --name Test "
   },
   "dependencies": {
-    "core-js": "^3.3.2",
+    "core-js": "^3.6.3",
     "rxjs": "^6.5.3",
     "vue": "^2.6.10",
     "vue-rx": "^6.2.0",
