@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Playground from "./playground"
+import Playground from "./components2/Playground"
 
 export default {
   name: 'app',

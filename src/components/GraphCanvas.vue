@@ -73,6 +73,7 @@ export default {
     };
   },
   mounted() {
+    //move the calculation 
     const { node, connector } = this.eventBus;
     const updateConnectionPosition$ = connector.events$.pipe(
       filter(({ event }) => event === connectorEventName.UPDATE_POSITION)
