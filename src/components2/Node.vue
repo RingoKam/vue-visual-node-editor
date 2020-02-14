@@ -1,5 +1,5 @@
 <template>
-  <div class="graph-node" :style="GraphNodeStyle" @mousedown.self.prevent.stop="startDrag($event)">
+  <div class="graph-node" :style="GraphNodeStyle" @mousedown.prevent.stop="startDrag($event)">
     <div class="graph-node-title" >
       <span>{{ title }}</span>
     </div>
@@ -54,8 +54,8 @@ export default {
     handleMove(ev) {
         console.log(ev);
       if (this.dragging) {
-        const x = this.pos.x + ev.movementX;
-        const y = this.pos.y + ev.movementY;
+        const x = ev.movementX;
+        const y = ev.movementY;
         this.eventBus.updateNodePos(this.id, { x, y });
         // this.data.position.x += ev.movementX / this.plugin.scaling;
         // this.data.position.y += ev.movementY / this.plugin.scaling;

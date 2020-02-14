@@ -7,9 +7,14 @@ export default (config) => {
     const panning$ = new BehaviorSubject({ x: 0, y: 0 });
     const scaling$ = new BehaviorSubject(1);
 
-    const updateNodePos = (id, node) => {
+    const updateNodePos = (id, changeNode) => {
         const current = nodePos$.getValue();
-        const next = { ...current, ...{ [id]: node } };
+        const scale = scaling$.getValue();
+        const newPos = {
+            x: current[id].x + (changeNode.x / scale),
+            y: current[id].y + (changeNode.y / scale)
+        }
+        const next = { ...current, ...{ [id]: newPos } };
         nodePos$.next(next);
     }
 
@@ -18,7 +23,7 @@ export default (config) => {
     }
 
     const updateScaling = (scale) => {
-        this.scaling$.next(scale);
+        scaling$.next(scale);
     }
 
     const getNodePos = (id) => {
