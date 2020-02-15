@@ -14,7 +14,7 @@ export default {
   },
   data() {
     return {
-      eventBus: CreateEventBus({ 1: {x: 111, y:211} })
+      eventBus: CreateEventBus({ 1: {x: 111, y:211}, 2: {x:10, y:20} })
     };
   }
 };
