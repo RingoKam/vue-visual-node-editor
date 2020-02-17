@@ -399,7 +399,7 @@ export default {
       this.mousePos.x = x;
       this.mousePos.y = y;
     },
-    computeEdgeCoordinateArray: function() {
+    computeEdgeCoordinateArray() {
       const el = this.$el.getBoundingClientRect();
       const offsetX = el.x;
       const offsetY = el.y;

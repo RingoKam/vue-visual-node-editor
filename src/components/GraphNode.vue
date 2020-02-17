@@ -39,7 +39,7 @@ export default {
     GraphNodeStyle() {
       const { x, y } = this.coordinates;
       return {
-        cursor: this.selected ? "move" : "pointer",
+        // cursor: this.selected ? "move" : "pointer",
         color: this.selected ? "red" : "black",
         top: `${y}px`,
         left: `${x}px`,

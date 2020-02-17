@@ -1,15 +1,18 @@
 <template>
   <div id="app">
-    <Playground />
+    <Playground2 />
+    <!-- <Playground /> -->
   </div>
 </template>
 
 <script>
-import Playground from "./components2/Playground"
+import Playground2 from "./components2/Playground";
+import Playground from "./playground";
 
 export default {
   name: 'app',
   components: {
+    Playground2,
     Playground
   }
 }

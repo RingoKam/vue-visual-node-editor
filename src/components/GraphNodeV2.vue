@@ -1,18 +1,23 @@
 <template>
   <div
     class="GraphNode"
-    @mousedown.stop.prevent="startDrag"
-    @dblclick="selectId"
+    @click="selectId"
     :style="GraphNodeStyle"
   >
-    <div>Node V2</div>
-    <div>Description</div>
-    <div class="input-output">
-      <div>
-        <GraphConnector v-for="input in inputs" :id="input.id" :key="id + '_' + input.id" />
+    <div class="" @mousedown.stop.prevent="startDrag">
+      <div>Node V2</div>
+      <div>Description</div>
+    </div>
+    <div class="content-container">
+      <div class="graph-node-input">
+        <div>
+          <GraphConnector v-for="input in inputs" :id="input.id" :key="id + '_' + input.id" />
+        </div>
       </div>
-      <div>
-        <GraphConnector v-for="output in outputs" :id="output.id" :key="id + '_' + output.id" />
+      <div class="graph-node-ouptut">
+        <div>
+          <GraphConnector v-for="output in outputs" :id="output.id" :key="id + '_' + output.id" />
+        </div>
       </div>
     </div>
   </div>
@@ -89,10 +94,21 @@ export default {
 </script>
 
 <style>
-.input-output {
-  display: flex;
-  justify-content: space-between;
+.content-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas: ". ." ". .";
 }
+
+.graph-node-input {
+  grid-column: 1;
+}
+
+.graph-node-output {
+  grid-column: 2;
+}
+
 .GraphNode {
   background: white;
   border: 1px solid #000000;

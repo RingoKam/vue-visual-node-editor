@@ -1,8 +1,8 @@
 <template>
   <div
     class="circle"
-    @mouseup.prevent="slotMouseUp($event)"
-    @mousedown.prevent="slotMouseDown($event)"
+    @mouseup.self.prevent="slotMouseUp($event)"
+    @mousedown.self.prevent="slotMouseDown($event)"
   ></div>
 </template>
 
