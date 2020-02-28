@@ -4,6 +4,7 @@ import { pluck, map } from "rxjs/operators"
 export default (config) => {
 
     const nodePos$ = new BehaviorSubject(config || {});
+    const nodeProperty$ = new BehaviorSubject({});
     const panning$ = new BehaviorSubject({ x: 0, y: 0 });
     const scaling$ = new BehaviorSubject(1);
 

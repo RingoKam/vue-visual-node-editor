@@ -1,4 +1,39 @@
-1. on load, figure out the position of each grid.
+# EventBus Constructor takes in the initial data set. 
+1. On load, figure out the position of each grid.
+2. create the connection
+
+
+Define my Action:
+* Move Screen
+    - Node
+    - Connection
+* Zoom in and out
+    - Node
+    - Connection
+
+* Create Node
+    - Node
+        * ability to register default property
+        
+    
+* Move Node 
+    - Node
+    - Connection
+* Select Node
+    - Node
+* Update Option Data
+
+
+
+* Create Connection
+    - Connection
+* Remove Connection
+    - Connection
+* Select Connection
+    - Connection
+
+
+
 
 we want to query the position whenever...
 1. we move the node that it is connected to (input or output)
@@ -13,8 +48,8 @@ vue state itself has reactivity built in...?
 
 my current state...
 nodes = {
-    id: []
-    connections: []
+    id: [],
+    connections: [],
     componentType: ''
 }
 

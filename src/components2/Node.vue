@@ -17,7 +17,7 @@ export default {
   inject: ["eventBus"],
   subscriptions: function() {
       return {
-          pos: this.eventBus.getNodePos(this.id)
+          pos: this.eventBus.getNodePos(this.id),
       }
   },
   computed: {
