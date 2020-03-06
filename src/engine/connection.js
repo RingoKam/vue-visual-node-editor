@@ -1,22 +1,19 @@
-import { BehaviorSubject } from "rxjs"
+import {  ObservableStore } from "@codewithdan/observable-store-extensions"
 
-function connection() {
+export class ConnectionStore extends ObservableStore {
+    constructor() {
+        super();
+    }
 
-    const connection$ = new BehaviorSubject({});
+    add() {
 
-    const newConnection = (input, output) => {
-        let newConnection = {
-            [`${input.id}_${output.id}`]: {
-                input, 
-                output
-            }
-        };
-        const current = connection$.getValue();
-        connection$.next({ ...current, ...newConnection });
-    } 
+    }
 
-    return {
-        newConnection,
-        connection$: connection$.asObservable();
+    remove() {
+
+    }
+
+    setInitial(state) {
+        this.setState(state, "INIT_CONNECTIONS");
     }
 }

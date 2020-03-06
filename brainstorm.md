@@ -32,7 +32,7 @@ Define my Action:
 * Select Connection
     - Connection
 
-
+* Option Factory to create observable store 
 
 
 we want to query the position whenever...

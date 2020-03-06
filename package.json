@@ -9,6 +9,7 @@
     "lib": "vue-cli-service build --target lib --name Test "
   },
   "dependencies": {
+    "@codewithdan/observable-store-extensions": "^2.2.6",
     "core-js": "^3.6.4",
     "rxjs": "^6.5.3",
     "vue": "^2.6.10",
