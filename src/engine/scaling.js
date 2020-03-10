@@ -1,18 +1,20 @@
-import { ObservableStore } from "@codewithdan/observable-store-extensions";
+import { ObservableStore } from "@codewithdan/observable-store"
 
 export class ScaleStore extends ObservableStore {
     constructor() {
-        super();
+        super({ 
+            stateSliceSelector: (state) => {
+                return state.scale;
+            }
+        });
     }
 
-    updateScaling(newScale) {
-        this.setState(newScale, "UPDATE_SCALE");
+    update(newScale) {
+        this.setState(() => {
+            return { 
+                scale: newScale
+             }
+        } , "UPDATE_SCALE");
     }
-
-    setInitial(state) {
-        if (!state) {
-            state = 1;
-        }
-        this.setState(state, "INIT_SCALE");
-    }
+ 
 }

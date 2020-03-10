@@ -1,8 +1,8 @@
-import {  ObservableStore } from "@codewithdan/observable-store-extensions"
+import { ObservableStore } from "@codewithdan/observable-store"
 
 export class ConnectionStore extends ObservableStore {
     constructor() {
-        super();
+        super({ stateSliceSelector: (state) => state.connections });
     }
 
     add() {
@@ -12,8 +12,5 @@ export class ConnectionStore extends ObservableStore {
     remove() {
 
     }
-
-    setInitial(state) {
-        this.setState(state, "INIT_CONNECTIONS");
-    }
+    
 }

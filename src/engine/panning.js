@@ -1,21 +1,28 @@
-import { ObservableStore } from "@codewithdan/observable-store-extensions";
+import { ObservableStore } from "@codewithdan/observable-store"
 
 export class PanningStore extends ObservableStore {
     constructor() {
-        super();
+        super({
+            stateSliceSelector: (state) => state.panning
+        });
     }
 
     update(x, y) {
-        this.setState({ x, y }, "UPDATE_PANNING");
+        this.setState((prevState) => {
+            return {
+                panning: {
+                    x: prevState.x + x,
+                    y: prevState.y + y
+                }
+            }
+        }, "UPDATE_PANNING");
     }
 
-    setInitial(state) {
-        if (!state) {
-            state = {
-                x: 0,
-                y: 0
-            };
-        }
-        this.setState(state, "INIT_PANNING");
+    set(x, y) {
+        this.setState(() => {
+            return {
+                panning: { x, y }
+            }
+        }, "SET_PANNING");
     }
 }

@@ -3,16 +3,31 @@
     <div class="graph-node-title">
       <span>{{ title }}</span>
     </div>
+
+    <!--Ability to add input/output-->
+    <div class="graph-node-inputoutput-container">
+      <div class="graph-node-input">
+        <NodeInterface :index="'1'" :type="'input'"></NodeInterface>
+      </div>
+      <div class="graph-node-output">
+        <NodeInterface :index="'1'" :type="'output'"></NodeInterface>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import NodeInterface from "./NodeInterface";
+
 export default {
   data() {
     return {
       title: "test",
       dragging: true
     };
+  },
+  components: {
+    NodeInterface
   },
   inject: ["engine"],
   // subscriptions: function() {
@@ -56,14 +71,13 @@ export default {
       document.removeEventListener("mouseup", this.stopDrag);
     },
     handleMove(ev) {
-      console.log(ev);
-      if (this.dragging) {
-        const x = ev.movementX;
-        const y = ev.movementY;
-        this.eventBus.updateNodePos(this.id, { x, y });
-        // this.data.position.x += ev.movementX / this.plugin.scaling;
-        // this.data.position.y += ev.movementY / this.plugin.scaling;
-      }
+      // if (this.dragging) {
+      const x = ev.movementX;
+      const y = ev.movementY;
+      this.engine.updateNodePos(this.id, { x, y });
+      // this.data.position.x += ev.movementX / this.plugin.scaling;
+      // this.data.position.y += ev.movementY / this.plugin.scaling;
+      // }
     },
     openContextMenu(ev) {
       // this.contextMenu.show = true;
@@ -75,6 +89,12 @@ export default {
 </script>
 
 <style lang="less">
+
+.graph-node-inputoutput-container {
+  display: flex;
+  height: auto;
+}
+
 .graph-node {
   max-width: 20rem;
   min-width: 10rem;
