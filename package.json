@@ -13,7 +13,7 @@
     "@codewithdan/observable-store-extensions": "^2.2.6",
     "core-js": "^3.6.4",
     "rxjs": "^6.5.3",
-    "vue": "^2.6.10",
+    "vue": "^2.6.11",
     "vue-rx": "^6.2.0",
     "vue-select": "^3.4.0"
   },
@@ -31,7 +31,7 @@
     "eslint-plugin-vue": "^6.1.2",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.11"
   },
   "eslintConfig": {
     "root": true,
